@@ -30,9 +30,9 @@ public class PspController {
     }
 	
 	@GetMapping("/save")
-    public ResponseEntity<Object> saveAllPspCounter() {
-		log.info("PspController|saveAllPspCounter");
-		ps.saveAll();
+    public ResponseEntity<Object> resetAllPspCounter() {
+		log.info("PspController|resetAllPspCounter");
+		ps.resetAll();
     	return new ResponseEntity<>("OK",HttpStatus.OK);
     }
 	

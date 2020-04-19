@@ -41,8 +41,8 @@ public class PspService {
 		return ps.findById(id);
     }
 	
-	public void saveAll() {
-		log.info("PspController|saveAllPspCounter|PspService|saveAll");
+	public void resetAll() {
+		log.info("PspController|resetAllPspCounter|PspService|resetAll");
 		
 		List<PspCounter> pspCounter = new ArrayList<>();
 		pspCounter.add(new PspCounter("psp11",0));
@@ -57,15 +57,11 @@ public class PspService {
 			for(PspCounter data : pspCounter){
 	            jsonStr = Obj.writeValueAsString(data);
 	            hashOperations.put("PspCounter", data.getPspName(),jsonStr);
-	            System.out.println(jsonStr);
 			}
         } 
         catch (IOException e) { 
             e.printStackTrace(); 
         }
-
-       System.out.println(redisTemplate.opsForHash().entries("PspCounter"));
-       System.out.println(hashOperations.get("PspCounter", "psp11"));
 	}
 
 }
