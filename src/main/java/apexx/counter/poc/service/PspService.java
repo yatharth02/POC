@@ -50,12 +50,12 @@ public class PspService {
 		pspCounter.add(new PspCounter("psp33",0));
 		pspCounter.add(new PspCounter("psp44",0));
 		
-		ObjectMapper Obj = new ObjectMapper(); 
+		ObjectMapper obj = new ObjectMapper(); 
 		String jsonStr = "";
 		
 		try { 
 			for(PspCounter data : pspCounter){
-	            jsonStr = Obj.writeValueAsString(data);
+	            jsonStr = obj.writeValueAsString(data);
 	            hashOperations.put("PspCounter", data.getPspName(),jsonStr);
 			}
         } 

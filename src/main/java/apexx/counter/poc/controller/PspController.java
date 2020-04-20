@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import apexx.counter.poc.service.PspCounterService;
 import apexx.counter.poc.service.PspService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +39,14 @@ public class PspController {
     }
 	
 	@GetMapping("/psp")
-	public ResponseEntity<Object> authorisation() {
+	public ResponseEntity<Object> authorisation() throws JsonProcessingException {
 		String[] pspIdList = {"psp11", "psp22", "psp33", "psp44"};
 		log.info("PspController|authorisation");
-		return new ResponseEntity<>(pcs.processAuthorisation(pspIdList),HttpStatus.OK);
+		String response = pcs.processAuthorisation(pspIdList);
+		if(null == response) {
+			response = "fail";
+		}
+		return new ResponseEntity<>(response,HttpStatus.OK);
 		
 	}
 }

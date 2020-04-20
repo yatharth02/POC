@@ -1,19 +1,18 @@
 package apexx.counter.poc.service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
-
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import apexx.counter.poc.model.PspCounter;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+
+import apexx.counter.poc.model.PspCounter;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -22,11 +21,9 @@ public class PspCounterService {
 	@Autowired
 	private PspService ps;
 	
-	@Autowired
-	private Gson gson;
+	private Gson gson = new Gson();
 	
-	@Autowired
-	private ObjectMapper obj;
+	private ObjectMapper obj = new ObjectMapper();
 	
 	private RedisTemplate<String, PspCounter> redisTemplate;
 
@@ -38,8 +35,10 @@ public class PspCounterService {
 
         hashOperations = redisTemplate.opsForHash();
     }
+    
+    private static final String PSP_COUNTER = "PspCounter";
 	
-	public String processAuthorisation(String[] pspIdList) {
+	public String processAuthorisation(String[] pspIdList) throws JsonProcessingException {
 		
 		log.info("PspController|authorisation|PspCounterService|processAuthorisation");
 		
@@ -48,13 +47,13 @@ public class PspCounterService {
 		
 		while (loopCounter>=0) {
 			
-			log.info("counter "+ loopCounter);
+			log.info("counter {}", loopCounter);
 			
-			if(!tempList[loopCounter].equals(null)) {
+			if(tempList[loopCounter] != null) {
 				
 				int roundRobinCounterAll = ps.getById(1).getCounterAll();
 				
-				System.out.println(redisTemplate.opsForHash().entries("PspCounter"));
+				log.info("PSP redis list {}", redisTemplate.opsForHash().entries(PSP_COUNTER));
 				
 				//calculate the sum of Redis counter for specific PSPs
 				int pspRedisCounterAll = calculatePspRedisCounter(pspIdList);
@@ -63,44 +62,24 @@ public class PspCounterService {
 					ps.resetAll();
 				}
 				
-				System.out.println(redisTemplate.opsForHash().entries("PspCounter"));
+				log.info("PSP redis list {}", redisTemplate.opsForHash().entries(PSP_COUNTER));
 				
 				//fetch PSP from DB or redis cache
 				int listCounter = fetchPspCounter(loopCounter);
 				
-				String str = (String) hashOperations.get("PspCounter", tempList[loopCounter]);
+				String str = (String) hashOperations.get(PSP_COUNTER, tempList[loopCounter]);
 				int pspRedisCounter = gson.fromJson(str, PspCounter.class).getReqCount();
 				
-				if(listCounter > pspRedisCounter) {
-					try {
-						String jsonUpdatedStr = obj.writeValueAsString(new PspCounter(tempList[loopCounter],pspRedisCounter+1));
-						hashOperations.put("PspCounter", tempList[loopCounter],jsonUpdatedStr);
-						
-						log.info(tempList[loopCounter]);
-						boolean response = externalPSP();
-						if(response) {
-							return "PSP passed ".concat(tempList[loopCounter]);
-						}
-						
-						//List<String> list = new ArrayList<>(Arrays.asList(tempList));
-						//list.remove(tempList[loopCounter]);
-						//tempList = list.toArray(new String[0]);
-						//loopCounter --;
-					}
-			        catch (IOException e) {e.printStackTrace();}
-				}
+				return (callPsp(tempList, loopCounter, pspRedisCounter, listCounter));
 			}
 			
 			loopCounter = loopCounter >= tempList.length-1 ? -1 : loopCounter+1;
 		}
-		return "fail";
+		return null;
 	}
 	
 	public boolean externalPSP() {
-		if(LocalDateTime.now().getMinute()%2==0) {
-			return true;
-		}
-		return false;
+		return(LocalDateTime.now().getMinute()%2==0);
 	}
 	
 	public int fetchPspCounter(int index ) {
@@ -118,6 +97,8 @@ public class PspCounterService {
 	        case 3: 
 	        	listCounter = ps.getById(1).getCounter4(); 
 	            break; 
+			default:
+				listCounter=0;
 		}
 		return listCounter;
 	}
@@ -126,11 +107,29 @@ public class PspCounterService {
 		int pspRedisCounterAll = 0;
 		for(String data : pspIdList) {
 			
-			String jsonStr = (String) hashOperations.get("PspCounter", data);
+			String jsonStr = (String) hashOperations.get(PSP_COUNTER, data);
 			PspCounter pspCounter = gson.fromJson(jsonStr, PspCounter.class);
 			pspRedisCounterAll += pspCounter.getReqCount();
 		}
 		return pspRedisCounterAll;
 	}
-
+	
+	public String callPsp(String[] tempList, int loopCounter, int pspRedisCounter, int listCounter) throws JsonProcessingException{
+		if(listCounter > pspRedisCounter) {
+			String jsonUpdatedStr = obj.writeValueAsString(new PspCounter(tempList[loopCounter],pspRedisCounter+1));
+			hashOperations.put(PSP_COUNTER, tempList[loopCounter],jsonUpdatedStr);
+			
+			log.info("Current PSP is {}",tempList[loopCounter]);
+			boolean response = externalPSP();
+			if(response) {
+				return "PSP passed ".concat(tempList[loopCounter]);
+			}
+			//List<String> list = new ArrayList<>(Arrays.asList(tempList));
+			//list.remove(tempList[loopCounter]);
+			//tempList = list.toArray(new String[0]);
+			//loopCounter --;
+		}
+		return null;
+	}
+	
 }
