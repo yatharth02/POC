@@ -1,4 +1,4 @@
-package apexx.counter.poc.config;
+package counter.poc.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,7 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import apexx.counter.poc.model.PspCounter;
+import counter.poc.entity.OrgRequestCounter;
 
 /**
  * Created by OmiD.HaghighatgoO on 8/19/2019.
@@ -22,8 +22,8 @@ public class ApexxConfig {
 	}
 	 
 	@Bean
-	public RedisTemplate<String, PspCounter> redisTemplate() {
-		final RedisTemplate<String, PspCounter> template = new RedisTemplate<>();
+	public RedisTemplate<String, OrgRequestCounter> redisTemplate() {
+		final RedisTemplate<String, OrgRequestCounter> template = new RedisTemplate<>();
 		template.setConnectionFactory(jedisConnectionFactory());
 		template.setKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(new GenericToStringSerializer<Object>(Object.class));

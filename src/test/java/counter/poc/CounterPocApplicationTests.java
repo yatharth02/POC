@@ -1,10 +1,10 @@
-package apexx.counter.poc;
+package counter.poc;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ApexxCounterPocApplicationTests {
+class CounterPocApplicationTests {
 
 	@Test
 	void contextLoads() {
